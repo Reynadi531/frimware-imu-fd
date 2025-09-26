@@ -1,7 +1,6 @@
 # ESP32 IMU → ESP-NOW Sender
 
 This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an **SSD1306 128×64** OLED, and (optionally) logs data to **microSD** using **SdFat**. It also exposes simple **HTTP endpoints** to start/stop streaming, set peer MAC, recalibrate, and adjust IMU rate.
----
 
 ## Features
 
@@ -29,8 +28,6 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 - **microSD** via SPI (SdFat v2)  
   - CS = 5, MOSI = 23, MISO = 19, SCK = 18
 
-> Power with a stable 5 V → 3.3 V supply. ESP-NOW benefits from a clear RF path.
-
 ---
 
 ## Software / Libraries
@@ -40,7 +37,7 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 - Libraries:
   - [`MPU6500_WE`](https://github.com/wollewald/MPU6500_WE)
   - [`U8g2`](https://github.com/olikraus/u8g2)
-  - [`SdFat`](https://github.com/greiman/SdFat) (v2.x)
+  - [`SdFat`](https://github.com/greiman/SdFat) 
   - [`NTPClient`](https://github.com/arduino-libraries/NTPClient)
 
 ## Project Structure
@@ -103,3 +100,8 @@ HTTP server started
 
 SD initialized
 ```
+
+## LICENSE
+On going license decisions. Under private license
+
+2025 @ Team Hardware Fall Detection Research, Telkom University
