@@ -77,8 +77,7 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 
 (Optional) Add /include/target_secret.h for UDP:
 ```cpp
-#define TARGET_IP IPAddress(192,168,1,50)
-#define TARGET_PORT 9000
+#define TARGET_MAC "your-peer-esp-now-reciever-mac"
 ```
 
 2. Flash and monitor:
