@@ -69,13 +69,13 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 ```
 
 ## Build & Flash
-1. Set Wi-Fi credentials in /include/wifi_secret.h:
+1. Set Wi-Fi credentials in /include/wifi_secret.h or /src/wifi_secret.h :
 ```cpp
 #define WIFI_SSID "your-ssid"
 #define WIFI_PASSWORD "your-pass"
 ```
 
-(Optional) Add /include/target_secret.h for UDP:
+Add /include/target_secret.h or /src/target_secret.h:
 ```cpp
 #define TARGET_MAC "your-peer-esp-now-reciever-mac"
 ```
