@@ -16,6 +16,7 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
   - `/peer/get`, `/peer/set?mac=AA:BB:CC:DD:EE:FF[&ch=1]`, `/peer/reset`
   - `/sd/status`, `/sd/start`, `/sd/stop`
   - `/target/*` for legacy UDP (optional)
+- **Discovery Server** at port 5681 with HTTP return
 
 ---
 

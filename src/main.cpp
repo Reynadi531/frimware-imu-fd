@@ -18,6 +18,7 @@ WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", 0, 60 * 60 * 1000);
 
 WebServer server(80);
+WebServer discoveryServer(5681);
 
 volatile bool g_stream_enabled = false;
 volatile uint32_t imu_delay_ms = 50;
@@ -96,6 +97,7 @@ void setup() {
 
   registerHttpRoutes();
   server.begin();
+  discoveryServer.begin();
   Serial.println("HTTP ready");
 
   timeClient.begin();

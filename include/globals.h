@@ -47,6 +47,7 @@ extern WiFiUDP ntpUDP;
 extern NTPClient timeClient;
 
 extern WebServer server;
+extern WebServer discoveryServer;
 
 extern volatile bool g_stream_enabled;
 extern volatile uint32_t imu_delay_ms;
@@ -58,7 +59,6 @@ extern volatile uint32_t g_send_ok;
 extern volatile uint32_t g_send_fail;
 extern volatile esp_now_send_status_t g_last_send_status;
 extern uint32_t pkt_seq;
-
 
 static uint16_t GMT_OFFSET_SEC = 7 * 3600; // GMT + 7
 
@@ -122,6 +122,8 @@ void registerHttpRoutes();
 
 void connectWiFi();
 
+/// @brief 
+/// @param pv 
 void ntpTask(void *pv);
 
 void imuTask(void *pv);

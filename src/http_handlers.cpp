@@ -16,6 +16,7 @@ static void handleSDStatus();
 static void handleSDStart();
 static void handleSDStop();
 static void handleSetDelay();
+static void handleDiscovery();
 
 void httpTask(void *pv) {
   for (;;) { server.handleClient(); vTaskDelay(pdMS_TO_TICKS(5)); }
@@ -35,6 +36,7 @@ void registerHttpRoutes() {
   server.on("/sd/status",       HTTP_ANY, handleSDStatus);
   server.on("/sd/start",        HTTP_ANY, handleSDStart);
   server.on("/sd/stop",         HTTP_ANY, handleSDStop);
+  discoveryServer.on("/", HTTP_ANY, handleDiscovery);
 }
 
 static void handleStart() {
@@ -203,4 +205,9 @@ static void handleSetDelay() {
   triggerDisplayUpdate();
   String body = String("{\"imu_delay_ms\":") + String(imu_delay_ms) + "}";
   server.send(200, "application/json", body);
+}
+
+static void handleDiscovery() {
+  String body = String("{\"device\":\"imu-fd-now\",\"ip\":\"") + WiFi.localIP().toString() + "\"}";
+  discoveryServer.send(200, "application/json", body);
 }
