@@ -72,12 +72,12 @@ void setup() {
   delay(800);
   MPU.autoOffsets();
   MPU.enableGyrDLPF();
-  MPU.setGyrDLPF(MPU6500_DLPF_6);
-  MPU.setSampleRateDivider(5);
-  MPU.setGyrRange(MPU6500_GYRO_RANGE_250);
-  MPU.setAccRange(MPU6500_ACC_RANGE_2G);
+  MPU.setGyrDLPF(MPU6500_DLPF_3);
+  MPU.setSampleRateDivider(0);
+  MPU.setGyrRange(MPU6500_GYRO_RANGE_500);
+  MPU.setAccRange(MPU6500_ACC_RANGE_4G);
   MPU.enableAccDLPF(true);
-  MPU.setAccDLPF(MPU6500_DLPF_6);
+  MPU.setAccDLPF(MPU6500_DLPF_3);
   delay(100);
 
   connectWiFi();
