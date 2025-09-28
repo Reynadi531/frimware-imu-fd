@@ -53,6 +53,7 @@ SemaphoreHandle_t g_netMutex = nullptr;
 void setup() {
   Serial.begin(115200);
   Wire.begin();
+  Wire.setClock(400000);
 
   g_i2cMutex = xSemaphoreCreateMutex();
   g_sdMutex  = xSemaphoreCreateMutex();
