@@ -13,9 +13,12 @@
 #include <U8g2lib.h>
 #include <SdFat.h>
 #include <target_secret.h>
+#include <ESPmDNS.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+
+#define IMU_HOSTNAME "esp32-imu"
 
 #define MPU_ADDR 0x68
 #define EEPROM_SIZE 64
@@ -107,6 +110,10 @@ void initDisplay();
 void updateDisplay();
 void triggerDisplayUpdate();
 void displayTask(void *pv);
+void drawHeader();
+void calibratingPage(bool in_progress, bool success);
+void connectingWifiPage(bool in_progress, bool success);
+void sdCardInitPage(bool in_progress, bool success);
 
 bool addOrUpdatePeer();
 void onEspNowSent(const uint8_t* mac_addr, esp_now_send_status_t status);

@@ -68,24 +68,17 @@ void setup() {
   else Serial.println("MPU6500 connected");
 
   u8g2.clearBuffer(); u8g2.setFont(u8g2_font_6x10_tf);
-  u8g2.drawStr(15, 25, "Calibrating IMU"); u8g2.drawStr(25, 40, "Keep Flat!"); u8g2.sendBuffer();
+  calibratingPage(true, false);
   delay(800);
-  MPU.autoOffsets();
-  MPU.enableGyrDLPF();
-  MPU.setGyrDLPF(MPU6500_DLPF_3);
-  MPU.setSampleRateDivider(0);
-  MPU.setGyrRange(MPU6500_GYRO_RANGE_500);
-  MPU.setAccRange(MPU6500_ACC_RANGE_4G);
-  MPU.enableAccDLPF(true);
-  MPU.setAccDLPF(MPU6500_DLPF_3);
-  delay(100);
 
   connectWiFi();
 
-  u8g2.clearBuffer(); u8g2.setFont(u8g2_font_6x10_tf);
-  u8g2.drawStr(20, 25, "Init SD Card"); u8g2.sendBuffer();
-  if (!initSDCard()) { Serial.println("SD NG"); u8g2.clearBuffer(); u8g2.drawStr(20,25,"SD Card Failed"); u8g2.sendBuffer(); delay(800); }
-  else Serial.println("SD OK");
+  sdCardInitPage(true, false); 
+  if (!initSDCard()) { 
+    sdCardInitPage(false, false);
+  } else {
+    sdCardInitPage(false, true);
+  }
 
   EEPROM.begin(EEPROM_SIZE);
   loadPeerFromEEPROM();
@@ -105,10 +98,10 @@ void setup() {
   if (timeClient.update()) setTimebase(timeClient.getEpochTime(), millis());
   else setTimebase(0, 0);
 
-  xTaskCreatePinnedToCore(ntpTask,     "ntpTask",     4096, nullptr, 2, nullptr, CORE_TIME);
-  xTaskCreatePinnedToCore(imuTask,     "imuTask",     8192, nullptr, 1, nullptr, CORE_TIME);
-  xTaskCreatePinnedToCore(httpTask,    "httpTask",    4096, nullptr, 1, nullptr, (CORE_TIME == 0) ? 1 : 0);
-  xTaskCreatePinnedToCore(displayTask, "displayTask", 4096, nullptr, 1, nullptr, (CORE_TIME == 0) ? 1 : 0);
+  xTaskCreatePinnedToCore(ntpTask,     "ntpTask",     4096, nullptr, 1, nullptr, CORE_TIME);
+  xTaskCreatePinnedToCore(imuTask,     "imuTask",     8192, nullptr, 2, nullptr, CORE_TIME);
+  xTaskCreatePinnedToCore(httpTask,    "httpTask",    4096, nullptr, 2, nullptr, (CORE_TIME == 0) ? 1 : 0);
+  xTaskCreatePinnedToCore(displayTask, "displayTask", 4096, nullptr, 2, nullptr, (CORE_TIME == 0) ? 1 : 0);
 
   triggerDisplayUpdate();
   Serial.println("All tasks started");
