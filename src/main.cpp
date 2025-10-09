@@ -69,7 +69,12 @@ void setup() {
 
   u8g2.clearBuffer(); u8g2.setFont(u8g2_font_6x10_tf);
   calibratingPage(true, false);
+  MPU.setSampleRateDivider(0);
+  MPU.setGyrRange(MPU6500_GYRO_RANGE_500);
+  MPU.setAccRange(MPU6500_ACC_RANGE_4G);
+  MPU.autoOffsets();
   delay(800);
+  calibratingPage(false, true);
 
   connectWiFi();
 
