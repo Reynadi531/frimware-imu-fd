@@ -10,15 +10,9 @@ void imuTask(void *pv) {
     xyzFloat a, g;
     float tC;
 
-    if (xSemaphoreTake(g_i2cMutex, pdMS_TO_TICKS(10)) == pdTRUE) {
-      a  = MPU.getGValues();
-      g  = MPU.getGyrValues();
-      tC = MPU.getTemperature();
-      xSemaphoreGive(g_i2cMutex);
-    } else {
-      vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(imu_delay_ms));
-      continue;
-    }
+    a  = MPU.getGValues();
+    g  = MPU.getGyrValues();
+    tC = MPU.getTemperature();
 
     TickType_t ticks = xTaskGetTickCount();
     uint32_t tick_ms = (uint32_t)(ticks * portTICK_PERIOD_MS);
@@ -38,13 +32,6 @@ void imuTask(void *pv) {
     );
 
     if (g_stream_enabled && n > 0) {
-      if (memcmp(g_peer_mac, "\x00\x00\x00\x00\x00\x00", 6) != 0) {
-        if (xSemaphoreTake(g_netMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
-          esp_err_t err = esp_now_send(g_peer_mac, (const uint8_t*)payload, (size_t)n);
-          xSemaphoreGive(g_netMutex);
-          if (err != ESP_OK) { g_send_fail++; g_last_send_status = ESP_NOW_SEND_FAIL; }
-        }
-      }
       if (g_logging_enabled) {
         if (xSemaphoreTake(g_sdMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
           if (!logIMUData(String(payload))) {
@@ -53,15 +40,16 @@ void imuTask(void *pv) {
           xSemaphoreGive(g_sdMutex);
         }
       }
+      if (memcmp(g_peer_mac, "\x00\x00\x00\x00\x00\x00", 6) != 0) {
+        if (xSemaphoreTake(g_netMutex, pdMS_TO_TICKS(5)) == pdTRUE) {
+          esp_err_t err = esp_now_send(g_peer_mac, (const uint8_t*)payload, (size_t)n);
+          xSemaphoreGive(g_netMutex);
+          if (err != ESP_OK) { g_send_fail++; g_last_send_status = ESP_NOW_SEND_FAIL; }
+        }
+      }
     }
 
     TickType_t prev_wake = last_wake;
     vTaskDelayUntil(&last_wake, pdMS_TO_TICKS(imu_delay_ms));
-    TickType_t now_ticks = xTaskGetTickCount();
-    uint32_t loop_dt_ms = (uint32_t)((now_ticks - prev_wake) * portTICK_PERIOD_MS);
-    int32_t jitter_ms = (int32_t)loop_dt_ms - (int32_t)imu_delay_ms;
-    if (jitter_ms < 0) jitter_ms = -jitter_ms;
-    g_loop_dt_avg_ms = loop_dt_ms;
-    g_loop_jitter_avg_ms = jitter_ms;
   }
 }

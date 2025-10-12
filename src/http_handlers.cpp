@@ -16,6 +16,7 @@ static void handleSDStatus();
 static void handleSDStart();
 static void handleSDStop();
 static void handleSetDelay();
+static void handleDisplayToggle();
 static void handleDiscovery();
 
 void httpTask(void *pv) {
@@ -36,6 +37,7 @@ void registerHttpRoutes() {
   server.on("/sd/status",       HTTP_ANY, handleSDStatus);
   server.on("/sd/start",        HTTP_ANY, handleSDStart);
   server.on("/sd/stop",         HTTP_ANY, handleSDStop);
+  server.on("/display/toggle",  HTTP_ANY, handleDisplayToggle);
   discoveryServer.on("/", HTTP_ANY, handleDiscovery);
 }
 
@@ -139,12 +141,7 @@ static void handleRecalibrate() {
   g_calibrating = true;
   triggerDisplayUpdate();
   delay(800);
-  if (xSemaphoreTake(g_i2cMutex, pdMS_TO_TICKS(200)) == pdTRUE) {
-    MPU.autoOffsets();
-    xSemaphoreGive(g_i2cMutex);
-  } else {
-    MPU.autoOffsets();
-  }
+  MPU.autoOffsets();
   g_calibrating = false;
   g_stream_enabled = was_streaming;
   triggerDisplayUpdate();
@@ -204,6 +201,12 @@ static void handleSetDelay() {
   imu_delay_ms = new_delay_ms;
   triggerDisplayUpdate();
   String body = String("{\"imu_delay_ms\":") + String(imu_delay_ms) + "}";
+  server.send(200, "application/json", body);
+}
+
+static void handleDisplayToggle() {
+  g_display_enabled = !g_display_enabled;
+  String body = String("{\"display_enabled\":") + (g_display_enabled ? "true" : "false") + "}";
   server.send(200, "application/json", body);
 }
 

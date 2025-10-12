@@ -3,8 +3,7 @@
 #include "globals.h"
 
 MPU6500_WE MPU = MPU6500_WE(MPU_ADDR);
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(
-  U8G2_R0, /* reset=*/ U8X8_PIN_NONE, /* clock=*/ OLED_SCL, /* data=*/ OLED_SDA);
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire1, OLED_RESET);
 
 SdFat32 sd;
 SdFile currentLogFile;
@@ -45,8 +44,8 @@ const float LOOP_EWMA_ALPHA = 0.2f;
 volatile bool g_display_update_needed = true;
 volatile uint32_t g_last_display_update = 0;
 const uint32_t DISPLAY_UPDATE_INTERVAL_MS = 1000;
+volatile bool g_display_enabled = true;
 
-SemaphoreHandle_t g_i2cMutex = nullptr;
 SemaphoreHandle_t g_sdMutex  = nullptr;
 SemaphoreHandle_t g_netMutex = nullptr;
 
@@ -55,10 +54,10 @@ void setup() {
   Wire.begin();
   Wire.setClock(400000);
 
-  g_i2cMutex = xSemaphoreCreateMutex();
+  Wire1.begin(OLED_SDA, OLED_SCL);
+
   g_sdMutex  = xSemaphoreCreateMutex();
   g_netMutex = xSemaphoreCreateMutex();
-  configASSERT(g_i2cMutex);
   configASSERT(g_sdMutex);
   configASSERT(g_netMutex);
 
@@ -67,7 +66,7 @@ void setup() {
   if (!MPU.init()) Serial.println("MPU6500 no response");
   else Serial.println("MPU6500 connected");
 
-  u8g2.clearBuffer(); u8g2.setFont(u8g2_font_6x10_tf);
+  display.clearDisplay();
   calibratingPage(true, false);
   MPU.setSampleRateDivider(0);
   MPU.setGyrRange(MPU6500_GYRO_RANGE_500);
@@ -104,7 +103,7 @@ void setup() {
   else setTimebase(0, 0);
 
   xTaskCreatePinnedToCore(ntpTask,     "ntpTask",     4096, nullptr, 1, nullptr, CORE_TIME);
-  xTaskCreatePinnedToCore(imuTask,     "imuTask",     8192, nullptr, 2, nullptr, CORE_TIME);
+  xTaskCreatePinnedToCore(imuTask,     "imuTask",     8192, nullptr, 1, nullptr, CORE_TIME);
   xTaskCreatePinnedToCore(httpTask,    "httpTask",    4096, nullptr, 2, nullptr, (CORE_TIME == 0) ? 1 : 0);
   xTaskCreatePinnedToCore(displayTask, "displayTask", 4096, nullptr, 2, nullptr, (CORE_TIME == 0) ? 1 : 0);
 

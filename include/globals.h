@@ -10,7 +10,8 @@
 #include <EEPROM.h>
 #include <esp_wifi.h>
 #include <esp_now.h>
-#include <U8g2lib.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 #include <SdFat.h>
 #include <target_secret.h>
 #include <ESPmDNS.h>
@@ -25,9 +26,12 @@
 #define EEPROM_MAGIC_TARGET 0x54524754u 
 #define EEPROM_MAGIC_PEER   0x454E4F57u 
 
-#define OLED_SDA 21
-#define OLED_SCL 22
+#define OLED_SDA 25
+#define OLED_SCL 26
 #define OLED_ADDR 0x3C
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
 
 #define SD_CS_PIN   5
 #define SD_MOSI_PIN 23
@@ -36,7 +40,7 @@
 
 extern MPU6500_WE MPU;
 
-extern U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2;
+extern Adafruit_SSD1306 display;
 
 extern SdFat32 sd;
 extern SdFile currentLogFile;
@@ -74,8 +78,8 @@ extern const float LOOP_EWMA_ALPHA;
 extern volatile bool g_display_update_needed;
 extern volatile uint32_t g_last_display_update;
 extern const uint32_t DISPLAY_UPDATE_INTERVAL_MS;
+extern volatile bool g_display_enabled;
 
-extern SemaphoreHandle_t g_i2cMutex; 
 extern SemaphoreHandle_t g_sdMutex;  
 extern SemaphoreHandle_t g_netMutex; 
 
@@ -104,7 +108,7 @@ bool initSDCard();
 String generateLogFileName();
 bool startLogging();
 bool stopLogging();
-bool logIMUData(const String& jsonData);
+bool logIMUData(String data);
 
 void initDisplay();
 void updateDisplay();

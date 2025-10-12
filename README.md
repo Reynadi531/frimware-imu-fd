@@ -7,7 +7,7 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 - **IMU (MPU6500)** sampling at a configurable rate (default 50 ms)
 - **ESP-NOW** unicast payloads (CSV)
 - **CSV logging to microSD (SdFat)** with one file per session
-- **SSD1306 (U8g2)** status display
+- **SSD1306 (Adafruit GFX)** status display
 - **HTTP control** (on port 80):
   - `/stream/start`, `/stream/stop`, `/stream/toggle`
   - `/status` – JSON device status
@@ -37,7 +37,8 @@ This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an
 - Arduino core for ESP32
 - Libraries:
   - [`MPU6500_WE`](https://github.com/wollewald/MPU6500_WE)
-  - [`U8g2`](https://github.com/olikraus/u8g2)
+  - [`Adafruit GFX Library`](https://github.com/adafruit/Adafruit-GFX-Library)
+  - [`Adafruit SSD1306`](https://github.com/adafruit/Adafruit_SSD1306)
   - [`SdFat`](https://github.com/greiman/SdFat) 
   - [`NTPClient`](https://github.com/arduino-libraries/NTPClient)
 

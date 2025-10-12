@@ -64,7 +64,7 @@ bool stopLogging() {
   return true;
 }
 
-bool logIMUData(const String& data) {
+bool logIMUData(String data) {
   if (!g_logging_enabled || !currentLogFile.isOpen()) return false;
 
   if (currentLogFile.println(data)) {
