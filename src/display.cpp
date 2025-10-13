@@ -8,7 +8,7 @@ void updateDisplay()
   display.setTextColor(SSD1306_WHITE);
   
   String ip_str = "IP: " + WiFi.localIP().toString();
-  display.setCursor(0, 23);
+  display.setCursor(0, 18);
   display.print(ip_str);
   
   String peer_mac_str = "Peer: ";
@@ -21,29 +21,29 @@ void updateDisplay()
   }
   else
     peer_mac_str += "None";
-  display.setCursor(0, 33);
+  display.setCursor(0, 27);
   display.print(peer_mac_str);
   
   String status_line = String("Stream:") + (g_stream_enabled ? "ON " : "OFF ");
   status_line += g_sd_available ? (g_logging_enabled ? "Log:ON" : "Log:RDY") : "SD:ERR";
-  display.setCursor(0, 43);
+  display.setCursor(0, 36);
   display.print(status_line);
   
   if (peer_set)
   {
     String stats = "TX:" + String(g_send_ok) + "/" + String(g_send_fail);
-    display.setCursor(0, 53);
+    display.setCursor(0, 45);
     display.print(stats);
   }
   if (g_logging_enabled)
   {
-    String log_stats = "Rec:" + String(g_log_records_written);
-    display.setCursor(0, 63);
+    String log_stats = "R:" + String(g_log_records_written);
+    display.setCursor(0, 54);
     display.print(log_stats);
   }
   else if (g_sd_available)
   {
-    display.setCursor(0, 63);
+    display.setCursor(0, 54);
     display.print("SD Ready");
   }
   display.display();
