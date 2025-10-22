@@ -15,6 +15,7 @@
 #include <SdFat.h>
 #include <target_secret.h>
 #include <ESPmDNS.h>
+#include <BluetoothSerial.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -22,9 +23,10 @@
 #define IMU_HOSTNAME "esp32-imu"
 
 #define MPU_ADDR 0x68
-#define EEPROM_SIZE 64
+#define EEPROM_SIZE 256
 #define EEPROM_MAGIC_TARGET 0x54524754u 
-#define EEPROM_MAGIC_PEER   0x454E4F57u 
+#define EEPROM_MAGIC_PEER   0x454E4F57u
+#define EEPROM_MAGIC_WIFI   0x57494649u 
 
 #define OLED_SDA 25
 #define OLED_SCL 26
@@ -90,6 +92,12 @@ struct PersistPeer {
   uint8_t  _pad;
 };
 
+struct PersistWiFi {
+  uint32_t magic;
+  char ssid[64];
+  char password[64];
+};
+
 struct Timebase {
   time_t   epoch_s;
   uint32_t base_ms;
@@ -127,11 +135,16 @@ void loadLegacyTargetFromEEPROM();
 bool saveLegacyTargetToEEPROM(const IPAddress& ip, uint16_t port);
 void loadPeerFromEEPROM();
 bool savePeerToEEPROM(const uint8_t mac[6], uint8_t channel);
+void loadWiFiFromEEPROM(char* ssid, char* password);
+bool saveWiFiToEEPROM(const char* ssid, const char* password);
 
 void httpTask(void *pv);
 void registerHttpRoutes();
 
 void connectWiFi();
+void initBluetooth();
+void stopBluetooth();
+void handleBluetoothCommands();
 
 /// @brief 
 /// @param pv 

@@ -24,3 +24,33 @@ bool savePeerToEEPROM(const uint8_t mac[6], uint8_t channel) {
   EEPROM.put(sizeof(PersistPeer), p);
   return EEPROM.commit();
 }
+
+void loadWiFiFromEEPROM(char* ssid, char* password) {
+  PersistWiFi w{};
+  EEPROM.get(sizeof(PersistPeer) * 2, w);
+  if (w.magic == EEPROM_MAGIC_WIFI) {
+    strncpy(ssid, w.ssid, 64);
+    strncpy(password, w.password, 64);
+    ssid[63] = '\0';
+    password[63] = '\0';
+    Serial.println("WiFi: Loaded from EEPROM");
+  } else {
+    // No stored credentials, use defaults from wifi_secret.h
+    strncpy(ssid, WIFI_SSID, 64);
+    strncpy(password, WIFI_PASSWORD, 64);
+    Serial.println("WiFi: Using defaults");
+  }
+}
+
+bool saveWiFiToEEPROM(const char* ssid, const char* password) {
+  PersistWiFi w{};
+  w.magic = EEPROM_MAGIC_WIFI;
+  strncpy(w.ssid, ssid, 63);
+  strncpy(w.password, password, 63);
+  w.ssid[63] = '\0';
+  w.password[63] = '\0';
+  EEPROM.put(sizeof(PersistPeer) * 2, w);
+  bool result = EEPROM.commit();
+  Serial.printf("WiFi save to EEPROM: %s\n", result ? "OK" : "FAIL");
+  return result;
+}
