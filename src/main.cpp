@@ -62,10 +62,6 @@ void setup() {
   configASSERT(g_netMutex);
 
   initDisplay();
-  
-  EEPROM.begin(EEPROM_SIZE);
-  
-  initBluetooth();
 
   if (!MPU.init()) Serial.println("MPU6500 no response");
   else Serial.println("MPU6500 connected");
@@ -88,6 +84,7 @@ void setup() {
     sdCardInitPage(false, true);
   }
 
+  EEPROM.begin(EEPROM_SIZE);
   loadPeerFromEEPROM();
 
   if (!initEspNow())
@@ -115,6 +112,4 @@ void setup() {
 }
 
 void loop() {
-  handleBluetoothCommands();
-  delay(100);
 }
