@@ -116,7 +116,7 @@ bool initSDCard();
 String generateLogFileName();
 bool startLogging();
 bool stopLogging();
-bool logIMUData(String data);
+bool logIMUData(const char* data);
 
 void initDisplay();
 void updateDisplay();

@@ -64,11 +64,11 @@ bool stopLogging() {
   return true;
 }
 
-bool logIMUData(String data) {
+bool logIMUData(const char* data) {
   if (!g_logging_enabled || !currentLogFile.isOpen()) return false;
 
   if (currentLogFile.println(data)) {
-    if (g_log_records_written % 10 == 0) currentLogFile.flush();
+    if (g_log_records_written % 20 == 0) currentLogFile.flush();
     g_log_records_written++;
     return true;
   } else {
