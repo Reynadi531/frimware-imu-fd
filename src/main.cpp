@@ -21,7 +21,6 @@ WebServer discoveryServer(5681);
 
 volatile bool g_stream_enabled = false;
 volatile uint32_t imu_delay_ms = 50;
-volatile bool g_calibrating = false;
 
 uint8_t g_peer_mac[6] = {0,0,0,0,0,0};
 uint8_t g_peer_channel = 0;
@@ -66,14 +65,20 @@ void setup() {
   if (!MPU.init()) Serial.println("MPU6500 no response");
   else Serial.println("MPU6500 connected");
 
-  display.clearDisplay();
-  calibratingPage(true, false);
   MPU.setSampleRateDivider(0);
   MPU.setGyrRange(MPU6500_GYRO_RANGE_500);
   MPU.setAccRange(MPU6500_ACC_RANGE_4G);
-  MPU.autoOffsets();
-  delay(800);
-  calibratingPage(false, true);
+
+  EEPROM.begin(EEPROM_SIZE);
+  loadPeerFromEEPROM();
+
+  if (loadCalibrationFromEEPROM()) {
+    Serial.println("Calibration loaded from EEPROM");
+    calibratingPage(false, true);
+    delay(1500);
+  } else {
+    Serial.println("No calibration data - use /imu/recalibrate");
+  }
 
   connectWiFi();
 
@@ -83,9 +88,6 @@ void setup() {
   } else {
     sdCardInitPage(false, true);
   }
-
-  EEPROM.begin(EEPROM_SIZE);
-  loadPeerFromEEPROM();
 
   if (!initEspNow())
     Serial.println("ESP-NOW ready; set peer via /peer/set?mac=AA:BB:CC:DD:EE:FF");

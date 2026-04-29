@@ -177,6 +177,89 @@ void sdCardInitPage(bool in_progress, bool success)
   display.display();
 }
 
+void calibrationInstructionPage(uint8_t pos, uint16_t sample_idx)
+{
+  display.clearDisplay();
+  drawHeader();
+  display.setTextColor(SSD1306_WHITE);
+  
+  const char* arrows[6] = { "^", "v", "<", ">", ".", "o" };
+  const char* desc[6] = { "X+ UP", "X+ DN", "Y+ UP", "Y+ DN", "FLAT", "FLIP" };
+  
+  if (pos < 6) {
+    display.setTextSize(2);
+    display.setCursor(50, 16);
+    display.print(arrows[pos]);
+    
+    display.setTextSize(1);
+    display.setCursor(30, 36);
+    display.print("Step ");
+    display.print(pos + 1);
+    display.print(":");
+    display.setCursor(0, 46);
+    display.print(desc[pos]);
+  }
+  
+  display.setTextSize(1);
+  uint8_t bar_len = 100;
+  uint8_t filled = (sample_idx * bar_len) / 128;
+  display.setCursor(14, 56);
+  display.print("[");
+  for (uint8_t i = 0; i < bar_len; i++) {
+    if (i < filled) display.print("=");
+    else if (i == filled) display.print(">");
+    else display.print(" ");
+  }
+  display.print("]");
+  
+  display.display();
+}
+
+void calibrationFittingPage()
+{
+  display.clearDisplay();
+  drawHeader();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(30, 26);
+  display.print("FITTING");
+  display.setTextSize(1);
+  display.setCursor(20, 48);
+  display.print("Computing...");
+  display.display();
+}
+
+void calibrationSuccessPage()
+{
+  display.clearDisplay();
+  drawHeader();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(24, 24);
+  display.print("CALIB");
+  display.setCursor(24, 44);
+  display.print("DONE!");
+  display.setTextSize(1);
+  display.setCursor(16, 56);
+  display.print("Saved to EEPROM");
+  display.display();
+  delay(3000);
+}
+
+void calibrationFailedPage()
+{
+  display.clearDisplay();
+  drawHeader();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(24, 24);
+  display.print("FAILED");
+  display.setTextSize(1);
+  display.setCursor(16, 48);
+  display.print("Retry:/imu/recalib");
+  display.display();
+}
+
 void triggerDisplayUpdate() { g_display_update_needed = true; }
 
 void displayTask(void *pv)
@@ -185,12 +268,31 @@ void displayTask(void *pv)
   {
     if (g_display_enabled)
     {
-      uint32_t current_time = millis();
-      if (g_display_update_needed || (current_time - g_last_display_update > DISPLAY_UPDATE_INTERVAL_MS))
-      {
-        updateDisplay();
-        g_display_update_needed = false;
-        g_last_display_update = current_time;
+      CalibState calib_state = g_calib_state;
+      if (calib_state == CALIB_COLLECTING) {
+        static uint8_t last_pos = 255;
+        static uint16_t last_idx = 0xFFFF;
+        if (last_pos != g_calib_position || last_idx != g_calib_sample_idx) {
+          calibrationInstructionPage(g_calib_position, g_calib_sample_idx);
+          last_pos = g_calib_position;
+          last_idx = g_calib_sample_idx;
+        }
+      } else if (calib_state == CALIB_FITTING) {
+        calibrationFittingPage();
+      } else if (calib_state == CALIB_SUCCESS) {
+        calibrationSuccessPage();
+        g_calib_state = CALIB_IDLE;
+        triggerDisplayUpdate();
+      } else if (calib_state == CALIB_FAILED) {
+        calibrationFailedPage();
+      } else {
+        uint32_t current_time = millis();
+        if (g_display_update_needed || (current_time - g_last_display_update > DISPLAY_UPDATE_INTERVAL_MS))
+        {
+          updateDisplay();
+          g_display_update_needed = false;
+          g_last_display_update = current_time;
+        }
       }
     }
     vTaskDelay(pdMS_TO_TICKS(100));

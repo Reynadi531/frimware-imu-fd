@@ -19,6 +19,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+#include "calibration.h"
+
 #define IMU_HOSTNAME "esp32-imu"
 
 #define MPU_ADDR 0x68
@@ -58,7 +60,6 @@ extern WebServer discoveryServer;
 
 extern volatile bool g_stream_enabled;
 extern volatile uint32_t imu_delay_ms;
-extern volatile bool g_calibrating;
 
 extern uint8_t g_peer_mac[6];
 extern uint8_t g_peer_channel;
@@ -118,6 +119,10 @@ void drawHeader();
 void calibratingPage(bool in_progress, bool success);
 void connectingWifiPage(bool in_progress, bool success);
 void sdCardInitPage(bool in_progress, bool success);
+void calibrationInstructionPage(uint8_t pos, uint16_t sample_idx);
+void calibrationFittingPage();
+void calibrationSuccessPage();
+void calibrationFailedPage();
 
 bool addOrUpdatePeer();
 void onEspNowSent(const uint8_t* mac_addr, esp_now_send_status_t status);
@@ -138,6 +143,11 @@ void connectWiFi();
 void ntpTask(void *pv);
 
 void imuTask(void *pv);
+
+void collectCalibSample(xyzFloat sample);
+uint8_t getCalibPosition();
+uint16_t getCalibSampleIdx();
+CalibState getCalibState();
 
 #if CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S3
   #define CORE_TIME 0

@@ -1,24 +1,36 @@
 #include "globals.h"
-#include <esp_timer.h>
-
-#define USE_ESP_TIMER 1
 
 void imuTask(void *pv) {
   TickType_t last_wake = xTaskGetTickCount();
-  int64_t last_us = 0;
   uint32_t loop_dt_ms_acc = 0;
   uint32_t loop_jitter_acc = 0;
   uint8_t loop_sample_count = 0;
 
-#if USE_ESP_TIMER
-  int64_t target_us = imu_delay_ms * 1000LL;
-  int64_t last_trig_us = esp_timer_get_time();
-#else
-  (void)last_us;
-#endif
-
   for (;;) {
-    if (g_calibrating) { vTaskDelay(pdMS_TO_TICKS(10)); continue; }
+    CalibState calib_state = g_calib_state;
+    
+    if (calib_state == CALIB_COLLECTING) {
+      xyzFloat a = MPU.getGValues();
+      collectCalibSample(a);
+      vTaskDelay(pdMS_TO_TICKS(imu_delay_ms));
+      continue;
+    }
+    
+    if (calib_state == CALIB_FITTING) {
+      bool fit_ok = runEllipsoidFit();
+      if (fit_ok) {
+        saveCalibrationToEEPROM();
+        g_calib_state = CALIB_SUCCESS;
+      } else {
+        g_calib_state = CALIB_FAILED;
+      }
+      continue;
+    }
+    
+    if (calib_state == CALIB_FAILED) {
+      vTaskDelay(pdMS_TO_TICKS(100));
+      continue;
+    }
 
     TickType_t work_start = xTaskGetTickCount();
 
@@ -26,20 +38,16 @@ void imuTask(void *pv) {
     float tC;
 
     a  = MPU.getGValues();
+    if (g_calib_params.valid) {
+      a = applyCalibration(a);
+    }
     g  = MPU.getGyrValues();
     tC = MPU.getTemperature();
 
-#if USE_ESP_TIMER
-    int64_t now_us = esp_timer_get_time();
-    uint64_t now_ms = (uint64_t)(now_us / 1000ULL);
-    String iso = iso8601_local_ms(now_ms);
-    uint32_t tick_ms = (uint32_t)(now_us / 1000ULL);
-#else
     TickType_t ticks = xTaskGetTickCount();
     uint32_t tick_ms = (uint32_t)(ticks * portTICK_PERIOD_MS);
     uint64_t now_ms  = epochMillisNow();
-    String iso       = iso8601_local_ms(now_ms);
-#endif
+    String iso = iso8601_local_ms(now_ms);
 
     char payload[220];
     int n = snprintf(
@@ -71,33 +79,6 @@ void imuTask(void *pv) {
       }
     }
 
-#if USE_ESP_TIMER
-    int64_t elapsed_us = esp_timer_get_time() - work_start;
-    int64_t interval_us = esp_timer_get_time() - last_trig_us;
-    int64_t jitter_us = interval_us - target_us;
-    if (jitter_us < 0) jitter_us = -jitter_us;
-
-    loop_dt_ms_acc += (uint32_t)(interval_us / 1000ULL);
-    loop_jitter_acc += (uint32_t)(jitter_us / 1000ULL);
-    loop_sample_count++;
-
-    if (loop_sample_count >= 8) {
-      g_loop_dt_avg_ms = loop_dt_ms_acc / loop_sample_count;
-      g_loop_jitter_avg_ms = loop_jitter_acc / loop_sample_count;
-      loop_dt_ms_acc = 0;
-      loop_jitter_acc = 0;
-      loop_sample_count = 0;
-    }
-
-    int64_t sleep_us = target_us - elapsed_us;
-    if (sleep_us > 0) {
-      ets_delay_us((uint32_t)sleep_us);
-    }
-    last_trig_us += target_us;
-    if (esp_timer_get_time() - last_trig_us > target_us) {
-      last_trig_us = esp_timer_get_time();
-    }
-#else
     TickType_t ticks_now = xTaskGetTickCount();
     TickType_t ticks_elapsed = ticks_now - work_start;
     TickType_t ticks_target = pdMS_TO_TICKS(imu_delay_ms);
@@ -121,6 +102,5 @@ void imuTask(void *pv) {
     } else {
       last_wake = ticks_now;
     }
-#endif
   }
 }

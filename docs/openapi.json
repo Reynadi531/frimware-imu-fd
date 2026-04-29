@@ -191,19 +191,46 @@
     "/imu/recalibrate": {
       "post": {
         "operationId": "recalibrateIMU",
-        "summary": "Recalibrate IMU",
-        "description": "Triggers IMU auto-calibration. Streaming is paused during calibration (~800ms) and automatically resumes.",
+        "summary": "Start ellipsoidal calibration",
+        "description": "Triggers 6-position ellipsoidal calibration. The device will collect 768 samples (128 per position) and fit an ellipsoid to compute offset and 3x3 correction matrix. Calibration runs automatically with OLED instructions showing each position. Parameters are saved to EEPROM.",
         "tags": ["IMU"],
         "responses": {
           "200": {
-            "description": "Calibration completed",
+            "description": "Calibration started",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CalibrationResponse"
+                  "$ref": "#/components/schemas/CalibrationStartResponse"
                 },
                 "example": {
-                  "recalibrated": true
+                  "calibration": "started",
+                  "state": "collecting"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imu/calib/status": {
+      "get": {
+        "operationId": "getCalibStatus",
+        "summary": "Get calibration status",
+        "description": "Returns the current calibration state, position (0-5), sample index (0-127), and whether stored calibration is valid.",
+        "tags": ["IMU"],
+        "responses": {
+          "200": {
+            "description": "Calibration status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibStatusResponse"
+                },
+                "example": {
+                  "state": "collecting",
+                  "position": 2,
+                  "sample_idx": 45,
+                  "valid": true
                 }
               }
             }
@@ -490,11 +517,44 @@
           }
         }
       },
-      "CalibrationResponse": {
+      "CalibrationStartResponse": {
         "type": "object",
         "properties": {
-          "recalibrated": {
-            "type": "boolean"
+          "calibration": {
+            "type": "string",
+            "enum": ["started"],
+            "description": "Confirmation that calibration was initiated"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["collecting", "idle"],
+            "description": "Current calibration state"
+          }
+        }
+      },
+      "CalibStatusResponse": {
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": ["idle", "collecting", "fitting", "success", "failed"],
+            "description": "Current calibration state"
+          },
+          "position": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 6,
+            "description": "Current position (0-5), 6 means collection complete"
+          },
+          "sample_idx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 128,
+            "description": "Current sample index within position (0-127)"
+          },
+          "valid": {
+            "type": "boolean",
+            "description": "Whether stored calibration parameters are valid"
           }
         }
       },

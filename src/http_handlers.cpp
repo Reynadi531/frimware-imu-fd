@@ -11,6 +11,7 @@ static void handlePeerGet();
 static void handlePeerSet();
 static void handlePeerReset();
 static void handleRecalibrate();
+static void handleCalibStatus();
 static void handleNetTune();
 static void handleSDStatus();
 static void handleSDStart();
@@ -29,6 +30,7 @@ void registerHttpRoutes() {
   server.on("/stream/toggle",   HTTP_ANY, handleToggle);
   server.on("/status",          HTTP_ANY, handleStatus);
   server.on("/imu/recalibrate", HTTP_ANY, handleRecalibrate);
+  server.on("/imu/calib/status", HTTP_ANY, handleCalibStatus);
   server.on("/imu/delay",       HTTP_ANY, handleSetDelay);
   server.on("/peer/get",        HTTP_ANY, handlePeerGet);
   server.on("/peer/set",        HTTP_ANY, handlePeerSet);  
@@ -86,7 +88,7 @@ static void handleStatus() {
                 ",\"send_ok\":" + String(g_send_ok) +
                 ",\"send_fail\":" + String(g_send_fail) +
                 ",\"last_send_status\":" + String((int)g_last_send_status) +
-                ",\"calibrating\":" + String(g_calibrating ? "true" : "false") +
+                ",\"calibrating\":" + String((g_calib_state != CALIB_IDLE) ? "true" : "false") +
                 ",\"latency_ms\":" + String(latency_ms) +
                 ",\"loop_dt_avg_ms\":" + String(g_loop_dt_avg_ms) +
                 ",\"jitter_avg_ms\":" + String(g_loop_jitter_avg_ms) +
@@ -136,16 +138,27 @@ static void handlePeerReset() {
   server.send(200, "application/json", String("{\"peer_reset\":true,\"saved\":") + (ok?"true":"false") + "}");
 }
 static void handleRecalibrate() {
-  bool was_streaming = g_stream_enabled;
-  g_stream_enabled = false;
-  g_calibrating = true;
-  triggerDisplayUpdate();
-  delay(800);
-  MPU.autoOffsets();
-  g_calibrating = false;
-  g_stream_enabled = was_streaming;
-  triggerDisplayUpdate();
-  server.send(200, "application/json", "{\"recalibrated\":true}");
+  beginCalibration();
+  String body = String("{\"calibration\":\"started\",\"state\":\"") + 
+    (g_calib_state == CALIB_COLLECTING ? "collecting" : "idle") + "\"}";
+  server.send(200, "application/json", body);
+}
+
+static void handleCalibStatus() {
+  String state_str;
+  switch (g_calib_state) {
+    case CALIB_IDLE: state_str = "idle"; break;
+    case CALIB_COLLECTING: state_str = "collecting"; break;
+    case CALIB_FITTING: state_str = "fitting"; break;
+    case CALIB_SUCCESS: state_str = "success"; break;
+    case CALIB_FAILED: state_str = "failed"; break;
+    default: state_str = "unknown"; break;
+  }
+  String body = String("{\"state\":\"") + state_str +
+    "\",\"position\":" + String(g_calib_position) +
+    ",\"sample_idx\":" + String(g_calib_sample_idx) +
+    ",\"valid\":" + (g_calib_params.valid ? "true" : "false") + "}";
+  server.send(200, "application/json", body);
 }
 static void handleNetTune() {
   esp_wifi_set_ps(WIFI_PS_NONE);
