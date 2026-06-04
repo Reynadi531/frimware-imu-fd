@@ -1,108 +1,57 @@
-# ESP32 IMU → ESP-NOW Sender
+# IMU-FD-NOW
 
-This project streams IMU data from an ESP32 over **ESP-NOW**, shows status on an **SSD1306 128×64** OLED, and (optionally) logs data to **microSD** using **SdFat**. It also exposes simple **HTTP endpoints** to start/stop streaming, set peer MAC, recalibrate, and adjust IMU rate.
+ESP32 firmware for IMU acquisition, ESP-NOW streaming, HTTP control, OLED status display, Wi-Fi provisioning, and optional microSD logging.
 
-## Features
+## What this repository contains
 
-- **IMU (MPU6500)** sampling at a configurable rate (default 50 ms)
-- **ESP-NOW** unicast payloads (CSV)
-- **CSV logging to microSD (SdFat)** with one file per session
-- **SSD1306 (Adafruit GFX)** status display
-- **HTTP control** (on port 80):
-  - `/stream/start`, `/stream/stop`, `/stream/toggle`
-  - `/status` – JSON device status
-  - `/imu/recalibrate`
-  - `/imu/delay?ms=50` or `?hz=20`
-  - `/peer/get`, `/peer/set?mac=AA:BB:CC:DD:EE:FF[&ch=1]`, `/peer/reset`
-  - `/sd/status`, `/sd/start`, `/sd/stop`
-  - `/target/*` for legacy UDP (optional)
-- **Discovery Server** at port 5681 with HTTP return
+- `src/`: the main sender firmware built with PlatformIO and Arduino
+- `gcs-src/main.ino`: a separate receiver / ground-station example sketch
+- `docs/openapi.json`: machine-readable control API contract
+- `docs/*.md`: maintainer and bring-up documentation for the current implementation
 
----
+## Start with the docs
 
-## Hardware
+- [Documentation index](./docs/README.md)
+- [Repository walkthrough](./docs/repository-walkthrough.md)
+- [Setup and operation](./docs/setup-and-operation.md)
+- [API reference](./docs/api-reference.md)
+- [Data and persistence](./docs/data-and-persistence.md)
+- [OpenAPI spec](./docs/openapi.json)
 
-- **ESP32** dev board (ESP-WROOM-32, ESP32-S3, etc.)
-- **MPU6500** IMU (I²C `0x68`)
-- **SSD1306 128×64** OLED (I²C)  
-  - SDA = **21**, SCL = **22**
-- **microSD** via SPI (SdFat v2)  
-  - CS = 5, MOSI = 23, MISO = 19, SCK = 18
+## Quick project summary
 
----
+The main firmware:
 
-## Software / Libraries
+- reads an MPU6500 IMU
+- shows status on an SSD1306 OLED
+- connects to Wi-Fi with Bluetooth Serial fallback provisioning
+- advertises HTTP control on port `80`
+- serves discovery on port `5681`
+- streams CSV IMU payloads over ESP-NOW
+- can log the same payloads to `/IMU_DATA/*.csv` on microSD
+- supports six-position calibration persisted to EEPROM
 
-- **PlatformIO** (Arduino framework)
-- Arduino core for ESP32
-- Libraries:
-  - [`MPU6500_WE`](https://github.com/wollewald/MPU6500_WE)
-  - [`Adafruit GFX Library`](https://github.com/adafruit/Adafruit-GFX-Library)
-  - [`Adafruit SSD1306`](https://github.com/adafruit/Adafruit_SSD1306)
-  - [`SdFat`](https://github.com/greiman/SdFat) 
-  - [`NTPClient`](https://github.com/arduino-libraries/NTPClient)
+## Build entrypoint
 
-## Project Structure
+PlatformIO configuration is in `platformio.ini`.
+
+Typical commands:
+
 ```bash
-.
-├── README.md
-├── include
-│   ├── README
-│   └── globals.h
-├── lib
-├── platformio.ini
-├── src
-│   ├── display.cpp
-│   ├── eeprom_cfg.cpp
-│   ├── espnow.cpp
-│   ├── http_handlers.cpp
-│   ├── imu.cpp
-│   ├── main.cpp
-│   ├── sd_log.cpp
-│   ├── target_secret.h
-│   ├── timebase.cpp
-│   ├── util.cpp
-│   ├── wifi.cpp
-│   └── wifi_secret.h
-└── test
-    └── README
-
-4 directories, 17 files
-```
-
-## Build & Flash
-1. Set Wi-Fi credentials in /include/wifi_secret.h or /src/wifi_secret.h :
-```cpp
-#define WIFI_SSID "your-ssid"
-#define WIFI_PASSWORD "your-pass"
-```
-
-Add /include/target_secret.h or /src/target_secret.h:
-```cpp
-#define TARGET_MAC "your-peer-esp-now-reciever-mac"
-```
-
-2. Flash and monitor:
-```bash
+pio run
 pio run -t upload
 pio device monitor -b 115200
 ```
 
-3. On boot you should see:
+## Current implementation notes
 
-```bash
-MPU connected & calibrated
+Use the docs under `docs/` instead of older summary material. The current firmware differs from stale earlier descriptions in a few important ways:
 
-Wi-Fi STA connected
+- there are no implemented `/target/*` HTTP routes in `src/http_handlers.cpp`
+- the main sender firmware OLED uses `Wire1` on pins `25/26`, not `21/22`
+- all implemented HTTP routes are registered as `HTTP_ANY`
+- the discovery endpoint on port `5681` exists in code even though it is outside the current OpenAPI file
 
-ESP-NOW init OK
+## License
 
-HTTP server started
-
-SD initialized
-```
-
-## LICENSE
-On going license decisions. Under private license
-
-2025 @ Team Hardware Fall Detection Research, Telkom University
+License is not finalized in this repository.

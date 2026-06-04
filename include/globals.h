@@ -15,6 +15,7 @@
 #include <SdFat.h>
 #include <target_secret.h>
 #include <ESPmDNS.h>
+#include <BluetoothSerial.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
@@ -24,9 +25,11 @@
 #define IMU_HOSTNAME "esp32-imu"
 
 #define MPU_ADDR 0x68
-#define EEPROM_SIZE 64
+#define EEPROM_SIZE 256
 #define EEPROM_MAGIC_TARGET 0x54524754u 
 #define EEPROM_MAGIC_PEER   0x454E4F57u 
+#define EEPROM_MAGIC_WIFI   0x57494649u
+#define EEPROM_WIFI_BASE    80 
 
 #define OLED_SDA 25
 #define OLED_SCL 26
@@ -136,7 +139,14 @@ bool savePeerToEEPROM(const uint8_t mac[6], uint8_t channel);
 void httpTask(void *pv);
 void registerHttpRoutes();
 
+extern BluetoothSerial SerialBT;
+
+bool loadWiFiFromEEPROM(char *ssid, char *pass);
+bool saveWiFiToEEPROM(const char *ssid, const char *pass);
+void clearWiFiEEPROM();
+
 void connectWiFi();
+void btConfigPage();
 
 /// @brief 
 /// @param pv 

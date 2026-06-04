@@ -260,6 +260,21 @@ void calibrationFailedPage()
   display.display();
 }
 
+void btConfigPage()
+{
+  display.clearDisplay();
+  drawHeader();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(10, 20);
+  display.print("BT Config Mode");
+  display.setCursor(4, 32);
+  display.print("esp32-imu-config");
+  display.setCursor(0, 46);
+  display.print("Waiting for config...");
+  display.display();
+}
+
 void triggerDisplayUpdate() { g_display_update_needed = true; }
 
 void displayTask(void *pv)
